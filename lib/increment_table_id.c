@@ -103,6 +103,11 @@ increment_table_counter(uint8_t counter_spec, uint8_t inc)
 	if(inc != 0) {
 	    VLOG_DBG("Incrementing ingress table id from:  %"PRIu8 ", inc:  %"PRIu8, orig, inc);
 	}
+
+	if((inc != 0) && ((orig % SIMON_TABLE_INC_WARN_INTERVAL) == 0)) {
+	    VLOG_WARN("Used %"PRIu8" of %"PRIu8" ingress tables", orig, SIMON_TABLE_PRODUCTION_START);
+	}
+
 	break;
     case TABLE_SPEC_EGRESS:
 	atomic_add(&atomic_table_id_egress, inc, &orig);
@@ -110,6 +115,12 @@ increment_table_counter(uint8_t counter_spec, uint8_t inc)
 	if(inc != 0) {
 	    VLOG_DBG("Incrementing egress table id from:  %"PRIu8 ", inc:  %"PRIu8, orig, inc);
 	}
+
+	if((inc != 0) && ((orig % SIMON_TABLE_INC_WARN_INTERVAL) == 0)) {
+	    VLOG_WARN("Used %"PRIu8" of %"PRIu8" egress tables",
+		      orig, SIMON_TABLE_RESERVED_START - SIMON_TABLE_EGRESS_START);
+	}
+
 	break;
     default:
 	VLOG_WARN("Unknown counter spec");
@@ -138,17 +149,21 @@ increment_table_id_execute(const struct ofpact_increment_table_id *incr_table_id
 
 uint8_t get_table_counter_by_id(uint8_t table_id)
 {
-    uint8_t ret = 0;
+    uint8_t counter_val = 0;
 
     if(TABLE_IS_INGRESS(table_id)) {
-	ret = increment_table_counter(TABLE_SPEC_INGRESS, 0);
+	counter_val = increment_table_counter(TABLE_SPEC_INGRESS, 0);
+
+	ovs_assert(counter_val < SIMON_TABLE_PRODUCTION_START);
     } else if(TABLE_IS_EGRESS(table_id)) {
-	ret = increment_table_counter(TABLE_SPEC_EGRESS, 0);
+	counter_val = increment_table_counter(TABLE_SPEC_EGRESS, 0);
+
+	ovs_assert(counter_val < SIMON_TABLE_RESERVED_START);
     } else {
 	VLOG_WARN("Attempting to get counter table id with unknown spec:  %"PRIu8, table_id);
     }
 
-    return ret;
+    return counter_val;
 }
 
 uint8_t get_table_counter_by_spec(uint8_t table_spec)

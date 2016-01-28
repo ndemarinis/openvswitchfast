@@ -7,6 +7,9 @@
 #define SIMON_TABLE_INGRESS_START (0)
 #define SIMON_TABLE_PRODUCTION_START (150)
 #define SIMON_TABLE_EGRESS_START (200)
+#define SIMON_TABLE_RESERVED_START (254) // Last table is reserved for OVS
+
+#define SIMON_TABLE_INC_WARN_INTERVAL (20) // Warn on usage of every N tables
 
 // Convenience macros for identifying table ranges
 /* #define TABLE_IS_INGRESS(id) ((id >= SIMON_TABLE_INGRESS_START) && \ */
